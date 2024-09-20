@@ -1,30 +1,69 @@
 pipeline {
     agent any
+    
     stages {
-        stage('Build') {
+        stage('Preparation') {
+            steps {
+                echo 'Preparing for the pipeline...'
+                echo "BRANCH NAME: ${env.BRANCH_NAME}"
+                echo sh(returnStdout: true, script: 'env')
+            }
+        }
+
+        stage('Testing') {
             steps {
                 script {
-                    // Report status to GitHub
-                    githubNotify context: 'continuous-integration/jenkins/pr-merge', state: 'pending'
-                    
-                    // Build steps here
-                    sh 'Testing completed and ready to build' // Replace with your build command
-
-                    // On success, update status
-                    githubNotify context: 'continuous-integration/jenkins/pr-merge', state: 'success'
+                    echo 'Running tests...'
+                    // Simulate a test command
+                    def testResult = sh(script: 'echo "Test passed!"', returnStdout: true).trim()
+                    echo "Test Result: ${testResult}"
                 }
             }
         }
-        stage('Test') {
+
+        stage('Build') {
+            when {
+                branch 'main'
+            }
             steps {
                 script {
-                    // Testing steps here
-                    sh 'make test' // Replace with your test command
-                    
-                    // On failure, update status
-                    githubNotify context: 'continuous-integration/jenkins/pr-merge', state: 'success' // or 'failure' if tests fail
+                    echo 'Build Started'
+                    // Simulate a build command
+                    sh 'echo "Building application..."'
+                }
+            }
+        }
+
+        stage('Deploy') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    echo 'Deploying Application'
+                    // Simulate a deployment command
+                    sh 'echo "Application deployed!"'
                 }
             }
         }
     }
+    
+    post {
+        success {
+            setBuildStatus("Build succeeded", "SUCCESS")
+        }
+        failure {
+            setBuildStatus("Build failed", "FAILURE")
+        } 
+    }
+}
+
+void setBuildStatus(String message, String state) {
+    step([
+        $class: "GitHubCommitStatusSetter",
+        reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/Swapnil011/tomcat.git"],
+        contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
+        errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+        statusResultSource: [$class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]]]
+    ])
 }
