@@ -14,7 +14,6 @@ pipeline {
             steps {
                 script {
                     echo 'Running tests...'
-                    // Simulate a test command
                     def testResult = sh(script: 'echo "Test passed!"', returnStdout: true).trim()
                     echo "Test Result: ${testResult}"
                 }
@@ -28,7 +27,6 @@ pipeline {
             steps {
                 script {
                     echo 'Build Started'
-                    // Simulate a build command
                     sh 'echo "Building application..."'
                 }
             }
@@ -41,7 +39,6 @@ pipeline {
             steps {
                 script {
                     echo 'Deploying Application'
-                    // Simulate a deployment command
                     sh 'echo "Application deployed!"'
                 }
             }
