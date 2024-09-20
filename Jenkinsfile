@@ -1,22 +1,31 @@
 pipeline {
     agent any
+
     stages {
-        stage('Execute Tests') {
+        stage('Preparation') {
             steps {
-                runTests('Unit Tests')
+                echo 'Preparing for tests...'
+            }
+        }
+
+        stage('Testing') {
+            steps {
+                script {
+                    echo 'Running tests...'
+                    // Simulate a test command
+                    def testResult = sh(script: 'echo "Test passed!"', returnStdout: true).trim()
+                    echo "Test Result: ${testResult}"
+                }
             }
         }
     }
-}
 
-def runTests(String testName) {
-    script {
-        publishChecks(name: testName, status: 'NONE')
-
-        // Simulate test execution with a delay
-        sleep(time: 5, unit: 'SECONDS')
-
-        // Use a valid status
-        publishChecks(name: testName, status: 'SUCCESS') // or any other valid status
+    post {
+        success {
+            echo 'All tests passed successfully!'
+        }
+        failure {
+            echo 'Some tests failed.'
+        }
     }
 }
