@@ -8,6 +8,22 @@ pipeline {
     }
 
     stages {
+        stage('Validate GitHub Token') {
+            steps {
+                script {
+                    def response = sh(script: """
+                        curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token ${GITHUB_TOKEN}" \
+                        "https://api.github.com/user"
+                    """, returnStdout: true).trim()
+                    
+                    if (response != '200') {
+                        error "GitHub token validation failed. HTTP Status: ${response}"
+                    } else {
+                        echo "GitHub token is valid."
+                    }
+                }
+            }
+        }
         stage('Build') {
             steps {
                 script {
