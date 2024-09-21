@@ -29,16 +29,19 @@ pipeline {
     post {
         success {
             script {
+                echo "Commit SHA is: ${GITHUB_SHA}" // Ensure correct SHA is set
                 updateGitHubStatus('success')
             }
         }
         failure {
             script {
+                echo "Commit SHA is: ${GITHUB_SHA}" // Ensure correct SHA is set
                 updateGitHubStatus('failure')
             }
         }
         unstable {
             script {
+                echo "Commit SHA is: ${GITHUB_SHA}" // Ensure correct SHA is set
                 updateGitHubStatus('error')
             }
         }
@@ -46,6 +49,7 @@ pipeline {
 }
 
 def updateGitHubStatus(String status) {
+    echo "Updating GitHub status to '${status}' for commit SHA '${GITHUB_SHA}'"
     sh """
         curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
         -d '{"state": "${status}", "context": "continuous-integration/jenkins"}' \
