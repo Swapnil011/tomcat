@@ -2,14 +2,18 @@ pipeline {
     agent any
 
     environment {
-        GITHUB_TOKEN = credentials('jenkin-personal')
-        GITHUB_REPO = 'Swapnil011/tomcat' // your repo
-        GITHUB_SHA = env.GIT_COMMIT
+        GITHUB_TOKEN = credentials('jenkin-personal') // Use the ID of your GitHub token credential
+        GITHUB_REPO = 'Swapnil011/tomcat' // Your repository
+        GITHUB_SHA = '' // Initialize, will set in stages
     }
 
     stages {
         stage('Build') {
             steps {
+                script {
+                    // Capture the GIT_COMMIT SHA in this stage
+                    GITHUB_SHA = env.GIT_COMMIT
+                }
                 echo 'Building...'
                 // Add your build steps here
             }
