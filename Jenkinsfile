@@ -1,66 +1,50 @@
 pipeline {
     agent any
-    
+
+    environment {
+        GITHUB_TOKEN = credentials('jenkin-personal')
+        GITHUB_REPO = 'Swapnil011/tomcat' // your repo
+        GITHUB_SHA = env.GIT_COMMIT
+    }
+
     stages {
-        stage('Preparation') {
-            steps {
-                echo 'Preparing for the pipeline...'
-                echo "BRANCH NAME: ${env.BRANCH_NAME}"
-                echo sh(returnStdout: true, script: 'env')
-            }
-        }
-
-        stage('Testing') {
-            steps {
-                script {
-                    echo 'Running tests...'
-                    def testResult = sh(script: 'echo "Test passed!"', returnStdout: true).trim()
-                    echo "Test Result: ${testResult}"
-                }
-            }
-        }
-
         stage('Build') {
-            when {
-                branch 'main'
-            }
             steps {
-                script {
-                    echo 'Build Started'
-                    sh 'echo "Building application..."'
-                }
+                echo 'Building...'
+                // Add your build steps here
             }
         }
-
-        stage('Deploy') {
-            when {
-                branch 'main'
-            }
+        stage('Test') {
             steps {
-                script {
-                    echo 'Deploying Application'
-                    sh 'echo "Application deployed!"'
-                }
+                echo 'Testing...'
+                // Add your test steps here
             }
         }
     }
-    
+
     post {
         success {
-            setBuildStatus("Build succeeded", "SUCCESS")
+            script {
+                updateGitHubStatus('success')
+            }
         }
         failure {
-            setBuildStatus("Build failed", "FAILURE")
-        } 
+            script {
+                updateGitHubStatus('failure')
+            }
+        }
+        unstable {
+            script {
+                updateGitHubStatus('error')
+            }
+        }
     }
 }
 
-void setBuildStatus(String message, String state) {
-    step([
-        $class: "GitHubCommitStatusSetter",
-        reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/Swapnil011/tomcat.git"],
-        contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
-        errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
-        statusResultSource: [$class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]]]
-    ])
+def updateGitHubStatus(String status) {
+    sh """
+        curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
+        -d '{"state": "${status}", "context": "continuous-integration/jenkins"}' \
+        "https://api.github.com/repos/${GITHUB_REPO}/statuses/${GITHUB_SHA}"
+    """
 }
