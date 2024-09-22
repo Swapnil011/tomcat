@@ -24,12 +24,14 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Preparation') {
             steps {
-                echo 'Preparing for the pipeline...'
-                echo "BRANCH NAME: ${env.BRANCH_NAME}"
-                echo sh(returnStdout: true, script: 'env')
+                script {
+                    echo 'Preparing for the pipeline...'
+                    echo "BRANCH NAME: ${env.BRANCH_NAME}"
+                    echo sh(returnStdout: true, script: 'env')
+                }
             }
         }
 
@@ -45,12 +47,12 @@ pipeline {
         }
 
         stage('Build') {
-            when {
-                branch 'main'
-            }
             steps {
                 script {
                     echo 'Build Started'
+                    // Capture the GIT_COMMIT SHA in this stage
+                    GITHUB_SHA = env.GIT_COMMIT ?: sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                    echo "Using GITHUB_SHA: ${GITHUB_SHA}"
                     // Simulate a build command
                     sh 'echo "Building application..."'
                 }
@@ -93,7 +95,6 @@ pipeline {
     }
 }
 
-// Function to update GitHub status
 def updateGitHubStatus(String status) {
     echo "Updating GitHub status to '${status}' for commit SHA '${GITHUB_SHA}'"
     sh """
