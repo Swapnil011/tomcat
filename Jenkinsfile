@@ -24,20 +24,49 @@ pipeline {
                 }
             }
         }
-        stage('Build') {
+        
+        stage('Preparation') {
             steps {
-                script {
-                    // Capture the GIT_COMMIT SHA in this stage
-                    GITHUB_SHA = env.GIT_COMMIT
-                }
-                echo 'Building...'
-                // Add your build steps here
+                echo 'Preparing for the pipeline...'
+                echo "BRANCH NAME: ${env.BRANCH_NAME}"
+                echo sh(returnStdout: true, script: 'env')
             }
         }
-        stage('Test') {
+
+        stage('Testing') {
             steps {
-                echo 'Testing...'
-                // Add your test steps here
+                script {
+                    echo 'Running tests...'
+                    // Simulate a test command
+                    def testResult = sh(script: 'echo "Test passed!"', returnStdout: true).trim()
+                    echo "Test Result: ${testResult}"
+                }
+            }
+        }
+
+        stage('Build') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    echo 'Build Started'
+                    // Simulate a build command
+                    sh 'echo "Building application..."'
+                }
+            }
+        }
+
+        stage('Deploy') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    echo 'Deploying Application'
+                    // Simulate a deployment command
+                    sh 'echo "Application deployed!"'
+                }
             }
         }
     }
@@ -64,6 +93,7 @@ pipeline {
     }
 }
 
+// Function to update GitHub status
 def updateGitHubStatus(String status) {
     echo "Updating GitHub status to '${status}' for commit SHA '${GITHUB_SHA}'"
     sh """
