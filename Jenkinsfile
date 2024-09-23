@@ -9,9 +9,6 @@ pipeline {
 
     stages {
         stage('Validate GitHub Token') {
-            when {
-                expression { env.CHANGE_ID != null }
-            }
             steps {
                 script {
                     def response = sh(script: """
@@ -29,9 +26,6 @@ pipeline {
         }
 
         stage('Preparation') {
-            when {
-                expression { env.CHANGE_ID != null }
-            }
             steps {
                 script {
                     echo 'Preparing for the pipeline...'
@@ -42,9 +36,6 @@ pipeline {
         }
 
         stage('Testing') {
-            when {
-                expression { env.CHANGE_ID != null }
-            }
             steps {
                 script {
                     echo 'Running tests...'
@@ -53,13 +44,9 @@ pipeline {
                     echo "Test Result: ${testResult}"
                 }
             }
-
         }
 
         stage('Build') {
-            when {
-                expression { env.CHANGE_ID != null }
-            }
             steps {
                 script {
                     echo 'Build Started'
@@ -71,37 +58,38 @@ pipeline {
                 }
             }
         }
+
+        stage('Deploy') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    echo 'Deploying Application'
+                    // Simulate a deployment command
+                    sh 'echo "Application deployed!"'
+                }
+            }
+        }
     }
 
     post {
         success {
             script {
-                if (GITHUB_SHA) {
-                    echo "Commit SHA is: ${GITHUB_SHA}" // Ensure correct SHA is set
-                    updateGitHubStatus('success')
-                } else {
-                    echo "No commit SHA available, skipping GitHub status update."
-                }
+                echo "Commit SHA is: ${GITHUB_SHA}" // Ensure correct SHA is set
+                updateGitHubStatus('success')
             }
         }
         failure {
             script {
-                if (GITHUB_SHA) {
-                    echo "Commit SHA is: ${GITHUB_SHA}" // Ensure correct SHA is set
-                    updateGitHubStatus('failure')
-                } else {
-                    echo "No commit SHA available, skipping GitHub status update."
-                }
+                echo "Commit SHA is: ${GITHUB_SHA}" // Ensure correct SHA is set
+                updateGitHubStatus('failure')
             }
         }
         unstable {
             script {
-                if (GITHUB_SHA) {
-                    echo "Commit SHA is: ${GITHUB_SHA}" // Ensure correct SHA is set
-                    updateGitHubStatus('error')
-                } else {
-                    echo "No commit SHA available, skipping GitHub status update."
-                }
+                echo "Commit SHA is: ${GITHUB_SHA}" // Ensure correct SHA is set
+                updateGitHubStatus('error')
             }
         }
     }
