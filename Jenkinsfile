@@ -76,20 +76,32 @@ pipeline {
     post {
         success {
             script {
-                echo "Commit SHA is: ${GITHUB_SHA}" // Ensure correct SHA is set
-                updateGitHubStatus('success')
+                if (GITHUB_SHA) {
+                    echo "Commit SHA is: ${GITHUB_SHA}" // Ensure correct SHA is set
+                    updateGitHubStatus('success')
+                } else {
+                    echo "No commit SHA available, skipping GitHub status update."
+                }
             }
         }
         failure {
             script {
-                echo "Commit SHA is: ${GITHUB_SHA}" // Ensure correct SHA is set
-                updateGitHubStatus('failure')
+                if (GITHUB_SHA) {
+                    echo "Commit SHA is: ${GITHUB_SHA}" // Ensure correct SHA is set
+                    updateGitHubStatus('failure')
+                } else {
+                    echo "No commit SHA available, skipping GitHub status update."
+                }
             }
         }
         unstable {
             script {
-                echo "Commit SHA is: ${GITHUB_SHA}" // Ensure correct SHA is set
-                updateGitHubStatus('error')
+                if (GITHUB_SHA) {
+                    echo "Commit SHA is: ${GITHUB_SHA}" // Ensure correct SHA is set
+                    updateGitHubStatus('error')
+                } else {
+                    echo "No commit SHA available, skipping GitHub status update."
+                }
             }
         }
     }
