@@ -9,6 +9,9 @@ pipeline {
 
     stages {
         stage('Validate GitHub Token') {
+            when {
+                expression { env.CHANGE_ID != null }
+            }
             steps {
                 script {
                     def response = sh(script: """
@@ -26,6 +29,9 @@ pipeline {
         }
 
         stage('Preparation') {
+            when {
+                expression { env.CHANGE_ID != null }
+            }
             steps {
                 script {
                     echo 'Preparing for the pipeline...'
@@ -36,6 +42,9 @@ pipeline {
         }
 
         stage('Testing') {
+            when {
+                expression { env.CHANGE_ID != null }
+            }
             steps {
                 script {
                     echo 'Running tests...'
@@ -44,9 +53,13 @@ pipeline {
                     echo "Test Result: ${testResult}"
                 }
             }
+
         }
 
         stage('Build') {
+            when {
+                expression { env.CHANGE_ID != null }
+            }
             steps {
                 script {
                     echo 'Build Started'
@@ -55,19 +68,6 @@ pipeline {
                     echo "Using GITHUB_SHA: ${GITHUB_SHA}"
                     // Simulate a build command
                     sh 'echo "Building application..."'
-                }
-            }
-        }
-
-        stage('Deploy') {
-            when {
-                branch 'main'
-            }
-            steps {
-                script {
-                    echo 'Deploying Application'
-                    // Simulate a deployment command
-                    sh 'echo "Application deployed!"'
                 }
             }
         }
