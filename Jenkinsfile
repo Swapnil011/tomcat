@@ -15,7 +15,7 @@ pipeline {
                             curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token \$GITHUB_TOKEN" \
                             "https://api.github.com/user"
                         """, returnStdout: true).trim()
-                        
+
                         if (response != '200') {
                             error "GitHub token validation failed. HTTP Status: ${response}"
                         } else {
@@ -98,15 +98,19 @@ pipeline {
 
 def updateGitHubStatus(String status) {
     withCredentials([string(credentialsId: 'jenkin-personal1', variable: 'GITHUB_TOKEN')]) {
-        echo "Updating GitHub status to '${status}' for commit SHA '${GITHUB_SHA}'"
-        def response = sh(script: """
-            curl -X POST -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer \$GITHUB_TOKEN" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${GITHUB_REPO}/statuses/${GITHUB_SHA}" \
-            -d '{"state": "${status}", "context": "continuous-integration/jenkins"}' 
-        """, returnStdout: true).trim()
-        
-        echo "GitHub response: ${response}"
+        try {
+            echo "Updating GitHub status to '${status}' for commit SHA '${GITHUB_SHA}'"
+            def response = sh(script: """
+                curl -X POST -H "Accept: application/vnd.github+json" \
+                -H "Authorization: Bearer \$GITHUB_TOKEN" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                "https://api.github.com/repos/${GITHUB_REPO}/statuses/${GITHUB_SHA}" \
+                -d '{"state": "${status}", "context": "continuous-integration/jenkins"}' 
+            """, returnStdout: true).trim()
+
+            echo "GitHub response: ${response}"
+        } catch (Exception e) {
+            error "Failed to update GitHub status: ${e.message}"
+        }
     }
 }
