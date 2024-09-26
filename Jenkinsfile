@@ -100,15 +100,34 @@ def updateGitHubStatus(String status) {
     withCredentials([string(credentialsId: 'jenkin-personal1', variable: 'GITHUB_TOKEN')]) {
         try {
             echo "Updating GitHub status to '${status}' for commit SHA '${GITHUB_SHA}'"
+
+            // Construct the JSON data
+            def jsonData = [
+                state: status,
+                context: "continuous-integration/jenkins"
+            ]
+            def jsonStr = new groovy.json.JsonBuilder(jsonData).toPrettyString()
+
+            // Send the request
             def response = sh(script: """
                 curl -X POST -H "Accept: application/vnd.github+json" \
                 -H "Authorization: Bearer \$GITHUB_TOKEN" \
                 -H "X-GitHub-Api-Version: 2022-11-28" \
+                -H "Content-Type: application/json; charset=utf-8" \
                 "https://api.github.com/repos/${GITHUB_REPO}/statuses/${GITHUB_SHA}" \
-                -d '{"state": "${status}", "context": "continuous-integration/jenkins"}' 
+                -d '${jsonStr}'
             """, returnStdout: true).trim()
 
+            // Log the response
             echo "GitHub response: ${response}"
+
+            // Parse the response and handle errors
+            def responseJson = new groovy.json.JsonSlurper().parseText(response)
+            if (responseJson.status == '400' && responseJson.message == 'Problems parsing JSON') {
+                error "Error parsing JSON response: ${responseJson.message}"
+            } else if (responseJson.status != '200') {
+                error "GitHub API error: ${responseJson.message}"
+            }
         } catch (Exception e) {
             error "Failed to update GitHub status: ${e.message}"
         }
