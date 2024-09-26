@@ -40,7 +40,6 @@ pipeline {
             steps {
                 script {
                     echo 'Running tests...'
-                    // Simulate a test command
                     def testResult = sh(script: 'echo "Test passed!"', returnStdout: true).trim()
                     echo "Test Result: ${testResult}"
                 }
@@ -51,10 +50,8 @@ pipeline {
             steps {
                 script {
                     echo 'Build Started'
-                    // Capture the GIT_COMMIT SHA in this stage
                     GITHUB_SHA = env.GIT_COMMIT ?: sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
                     echo "Using GITHUB_SHA: ${GITHUB_SHA}"
-                    // Simulate a build command
                     sh 'echo "Building application..."'
                 }
             }
@@ -67,7 +64,6 @@ pipeline {
             steps {
                 script {
                     echo 'Deploying Application'
-                    // Simulate a deployment command
                     sh 'echo "Application deployed!"'
                 }
             }
@@ -77,19 +73,16 @@ pipeline {
     post {
         success {
             script {
-                echo "Commit SHA is: ${GITHUB_SHA}" // Ensure correct SHA is set
                 updateGitHubStatus('success')
             }
         }
         failure {
             script {
-                echo "Commit SHA is: ${GITHUB_SHA}" // Ensure correct SHA is set
                 updateGitHubStatus('failure')
             }
         }
         unstable {
             script {
-                echo "Commit SHA is: ${GITHUB_SHA}" // Ensure correct SHA is set
                 updateGitHubStatus('error')
             }
         }
@@ -101,14 +94,12 @@ def updateGitHubStatus(String status) {
         try {
             echo "Updating GitHub status to '${status}' for commit SHA '${GITHUB_SHA}'"
 
-            // Construct the JSON data
             def jsonData = [
                 state: status,
                 context: "continuous-integration/jenkins"
             ]
             def jsonStr = new groovy.json.JsonBuilder(jsonData).toPrettyString()
 
-            // Send the request
             def response = sh(script: """
                 curl -X POST -H "Accept: application/vnd.github+json" \
                 -H "Authorization: Bearer \$GITHUB_TOKEN" \
@@ -118,15 +109,11 @@ def updateGitHubStatus(String status) {
                 -d '${jsonStr}'
             """, returnStdout: true).trim()
 
-            // Log the response
             echo "GitHub response: ${response}"
 
-            // Parse the response and handle errors
             def responseJson = new groovy.json.JsonSlurper().parseText(response)
-            if (responseJson.status == '400' && responseJson.message == 'Problems parsing JSON') {
-                error "Error parsing JSON response: ${responseJson.message}"
-            } else if (responseJson.status != '200') {
-                error "GitHub API error: ${responseJson.message}"
+            if (responseJson.state != status) {
+                error "Unexpected response from GitHub API: ${responseJson}"
             }
         } catch (Exception e) {
             error "Failed to update GitHub status: ${e.message}"
